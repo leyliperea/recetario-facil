@@ -1,0 +1,50 @@
+{
+  "name": "Recetario Fácil",
+  "short_name": "Recetario",
+  "lang": "es",
+  "description": "Recetas sencillas, favoritos y lista de compras.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#faf8f5",
+  "theme_color": "#74569b",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "widgets": [
+    {
+      "name": "Recetario Fácil: ideas para cocinar",
+      "short_name": "Recetario Fácil",
+      "description": "Consulta una receta y descubre otra idea sin salir del panel de Windows.",
+      "tag": "recetario-ideas",
+      "template": "recipe-card",
+      "ms_ac_template": "widgets/recipe-template.json",
+      "data": "widgets/recipe-data.json",
+      "type": "application/json",
+      "screenshots": [
+        {
+          "src": "widgets/widget-preview.png",
+          "sizes": "600x400",
+          "label": "Recetario Fácil: ideas para cocinar",
+          "platform": "Windows"
+        }
+      ],
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ],
+      "auth": false
+    }
+  ]
+}

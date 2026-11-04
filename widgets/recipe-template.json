@@ -1,0 +1,51 @@
+{
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "type": "AdaptiveCard",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "RECETARIO FÁCIL",
+      "weight": "Bolder",
+      "size": "Small",
+      "color": "Accent"
+    },
+    {
+      "type": "TextBlock",
+      "text": "Una idea para cocinar",
+      "size": "Small",
+      "isSubtle": true
+    },
+    {
+      "type": "TextBlock",
+      "text": "${name}",
+      "size": "Large",
+      "weight": "Bolder",
+      "wrap": true
+    },
+    {
+      "type": "TextBlock",
+      "text": "${category} · ${time} min · ${servings} personas",
+      "wrap": true,
+      "isSubtle": true
+    },
+    {
+      "type": "TextBlock",
+      "text": "${summary}",
+      "wrap": true,
+      "maxLines": 3
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.Execute",
+      "title": "Ver receta",
+      "verb": "open-recipe"
+    },
+    {
+      "type": "Action.Execute",
+      "title": "Otra idea",
+      "verb": "next-recipe"
+    }
+  ]
+}
