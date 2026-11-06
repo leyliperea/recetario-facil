@@ -32,9 +32,9 @@
       "type": "application/json",
       "screenshots": [
         {
-          "src": "widgets/widget-preview.png",
-          "sizes": "600x400",
-          "label": "Recetario Fácil: ideas para cocinar",
+          "src": "widgets/widget-preview.svg",
+          "sizes": "300x304",
+          "label": "Recetario Fácil: receta destacada",
           "platform": "Windows"
         }
       ],
