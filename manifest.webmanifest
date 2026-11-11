@@ -35,16 +35,26 @@
           "src": "widgets/widget-preview.svg",
           "sizes": "300x304",
           "label": "Recetario Fácil: receta destacada",
-          "platform": "Windows"
+          "platform": "Windows",
+          "type": "image/svg+xml"
         }
       ],
       "icons": [
         {
           "src": "icon-192.png",
-          "sizes": "192x192"
+          "sizes": "192x192",
+          "type": "image/png"
         }
       ],
-      "auth": false
+      "auth": false,
+      "multiple": false,
+      "update": 86400
     }
+  ],
+  "id": "./",
+  "orientation": "any",
+  "categories": [
+    "food",
+    "lifestyle"
   ]
 }
