@@ -3,8 +3,8 @@
   "short_name": "Recetario",
   "lang": "es",
   "description": "Recetas sencillas, favoritos y lista de compras.",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "/recetario-facil/",
+  "scope": "/recetario-facil/",
   "display": "standalone",
   "background_color": "#faf8f5",
   "theme_color": "#74569b",
@@ -51,7 +51,7 @@
       "update": 86400
     }
   ],
-  "id": "./",
+  "id": "/recetario-facil/",
   "orientation": "any",
   "categories": [
     "food",
