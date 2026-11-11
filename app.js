@@ -8,7 +8,7 @@ const recipes=[
 ];
 const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))||fallback}catch{return fallback}};let favorites=read('rf-favorites',[]),shopping=read('rf-shopping',[]),page='all',category='Todas';const $=s=>document.querySelector(s);const save=()=>{try{localStorage.setItem('rf-favorites',JSON.stringify(favorites));localStorage.setItem('rf-shopping',JSON.stringify(shopping))}catch{toast('No se pudo guardar en este navegador.')}};const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const photo=r=>`https://images.unsplash.com/${r.image}?w=800&auto=format&fit=crop`;function toast(t){$('#toast').textContent=t;$('#toast').style.display='block';clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>$('#toast').style.display='none',2600)}
 function render(){document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));$('#fav-count').textContent=favorites.length?`(${favorites.length})`:'';const isShopping=page==='shopping';$('#shopping').hidden=!isShopping;$('#grid').hidden=isShopping;$('#search').hidden=isShopping;$('#filters').hidden=isShopping;$('#section-title').textContent=isShopping?'Tu lista de compras':page==='favorites'?'Tus recetas favoritas':'¿Qué se te antoja hoy?';if(isShopping){$('#result-count').textContent=`${shopping.filter(x=>!x.done).length} ingredientes pendientes`;renderShopping();return}$('#filters').innerHTML=['Todas','Desayunos','Comidas','Cenas','Postres'].map(c=>`<button data-category="${c}" class="${category===c?'active':''}">${c}</button>`).join('');const normalize=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();const q=normalize($('#search').value);const list=recipes.filter(r=>(page!=='favorites'||favorites.includes(r.id))&&(category==='Todas'||r.category===category)&&normalize(r.name+' '+r.ingredients.join(' ')).includes(q));$('#result-count').textContent=`${list.length} recetas para inspirarte`;$('#grid').innerHTML=list.map(r=>`<article class="card"><div class="photo"><img src="${photo(r)}" alt="${r.name}" loading="lazy"><button class="heart" data-favorite="${r.id}" aria-label="${favorites.includes(r.id)?'Quitar de':'Agregar a'} favoritos" aria-pressed="${favorites.includes(r.id)}">${favorites.includes(r.id)?'♥':'♡'}</button></div><div class="card-body"><span class="tag">${r.category}</span><h3>${r.name}</h3><div class="meta"><span>◷ ${r.time} min</span><span>Para ${r.servings} personas</span></div><div class="card-bottom"><span class="difficulty">Fácil</span><button class="view" data-recipe="${r.id}">Ver receta ↗</button></div></div></article>`).join('')||'<div class="empty">'+(page==='favorites'?'Guarda tus recetas tocando el corazón.':'No encontramos recetas. Prueba con otro ingrediente o categoría.')+'</div>'}
-function openRecipe(id){const r=recipes.find(r=>r.id===id);$('#recipe-detail').innerHTML=`<img class="dialog-img" src="${photo(r)}" alt="${r.name}"><div class="detail"><span class="tag">${r.category} · ${r.time} min · ${r.servings} porciones</span><h2>${r.name}</h2><h4>Ingredientes</h4><ul>${r.ingredients.map(i=>`<li>${i}</li>`).join('')}</ul><button class="primary" data-add="${r.id}">Agregar ingredientes a mi lista</button><h4>Paso a paso</h4><ol>${r.steps.map(s=>`<li>${s}</li>`).join('')}</ol></div>`;$('#dialog').showModal()}
+function openRecipe(id){const r=recipes.find(r=>r.id===id);$('#recipe-detail').innerHTML=`<img class="dialog-img" src="${photo(r)}" alt="${r.name}"><div class="detail"><span class="tag">${r.category} · ${r.time} min · ${r.servings} porciones</span><h2>${r.name}</h2><button type="button" class="primary" data-share-recipe="${r.id}">Compartir imagen</button><p class="muted" id="share-recipe-status" role="status"></p><h4>Ingredientes</h4><ul>${r.ingredients.map(i=>`<li>${i}</li>`).join('')}</ul><button class="primary" data-add="${r.id}">Agregar ingredientes a mi lista</button><h4>Paso a paso</h4><ol>${r.steps.map(s=>`<li>${s}</li>`).join('')}</ol></div>`;$('#dialog').showModal()}
 function renderShopping(){$('#shopping').innerHTML=`<div class="shopping"><form class="add-form" id="add-form"><input class="search" id="new-item" maxlength="150" placeholder="Agregar un ingrediente…" aria-label="Nuevo ingrediente" required><button class="primary">Agregar</button></form>${shopping.map((i,n)=>`<label class="item"><input type="checkbox" data-check="${n}" ${i.done?'checked':''}><span>${escapeHTML(i.name)}</span><button type="button" data-remove="${n}" aria-label="Eliminar ${escapeHTML(i.name)}">×</button></label>`).join('')||'<p class="empty">Agrega ingredientes desde una receta o escríbelos aquí.</p>'}${shopping.some(i=>i.done)?'<button id="clear-done">Eliminar los comprados</button>':''}</div>`;$('#add-form').onsubmit=e=>{e.preventDefault();const name=$('#new-item').value.trim();if(name){shopping.push({name,done:false});save();render();$('#new-item').focus()}}}
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.page){page=b.dataset.page;category='Todas';$('#search').value='';render()}if(b.dataset.category){category=b.dataset.category;render()}if(b.dataset.favorite){const id=Number(b.dataset.favorite);favorites=favorites.includes(id)?favorites.filter(x=>x!==id):[...favorites,id];save();render()}if(b.dataset.recipe)openRecipe(Number(b.dataset.recipe));if(b.dataset.add){const r=recipes.find(r=>r.id===Number(b.dataset.add));r.ingredients.forEach(name=>{if(!shopping.some(i=>i.name===name))shopping.push({name,done:false})});save();toast('Ingredientes agregados a tu lista')}if(b.dataset.remove!==undefined){e.preventDefault();shopping.splice(Number(b.dataset.remove),1);save();render()}if(b.id==='clear-done'){shopping=shopping.filter(i=>!i.done);save();render()}});document.addEventListener('change',e=>{if(e.target.dataset.check!==undefined){shopping[Number(e.target.dataset.check)].done=e.target.checked;save();render()}});$('#search').addEventListener('input',render);$('.dialog-close').onclick=()=>$('#dialog').close();$('#dialog').addEventListener('click',e=>{if(e.target===$('#dialog'))$('#dialog').close()});$('#explore').onclick=()=>$('#recipes').scrollIntoView({behavior:'smooth'});let installPrompt;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;$('#install').style.display='inline-block'});$('#install').onclick=async()=>{if(installPrompt){await installPrompt.prompt();installPrompt=null;$('#install').style.display='none'}};if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');render();
 
@@ -49,3 +49,92 @@ function closeAppearance(){ $('#appearance-panel').hidden=true;$('#tool-appearan
 $('#tool-appearance').addEventListener('click',()=>{const panel=$('#appearance-panel');panel.hidden=!panel.hidden;$('#tool-appearance').setAttribute('aria-expanded',String(!panel.hidden))});
 document.addEventListener('click',event=>{if(!event.target.closest('.recipe-tools'))closeAppearance()});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('#appearance-panel').hidden){closeAppearance();$('#tool-appearance').focus()}});
+
+
+// Draw the complete recipe locally, without depending on remote images or fonts.
+function recipeImage(r) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 960;
+  const ctx = canvas.getContext('2d');
+  const rows = [];
+  let y = 74;
+  function add(value, font, color, lineHeight, x = 72) {
+    ctx.font = font;
+    let line = '';
+    for (const word of value.split(/\s+/)) {
+      const candidate = line ? line + ' ' + word : word;
+      if (line && ctx.measureText(candidate).width > canvas.width - x - 72) {
+        rows.push({line, font, color, x, y});
+        y += lineHeight;
+        line = word;
+      } else line = candidate;
+    }
+    rows.push({line, font, color, x, y});
+    y += lineHeight;
+  }
+  add('RECETARIO FÁCIL', 'bold 23px sans-serif', '#674b86', 52);
+  add(r.name, 'bold 58px Georgia', '#30233e', 66);
+  add(r.category + '  ·  ' + r.time + ' min  ·  ' + r.servings + ' porciones', '28px sans-serif', '#5d4b6b', 46);
+  y += 30;
+  const divider = y - 10;
+  add('Ingredientes', 'bold 37px Georgia', '#5c3c7a', 58);
+  for (const ingredient of r.ingredients) {
+    add('•  ' + ingredient, '30px sans-serif', '#302c35', 42, 84);
+  }
+  y += 28;
+  add('Paso a paso', 'bold 37px Georgia', '#5c3c7a', 58);
+  r.steps.forEach((step, i) => {
+    add((i + 1) + '.  ' + step, '30px sans-serif', '#302c35', 43, 84);
+    y += 12;
+  });
+  canvas.height = y + 52;
+  ctx.fillStyle = '#fcf9f5';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#eee5f5';
+  ctx.fillRect(0, 0, canvas.width, divider);
+  ctx.fillStyle = '#74569b';
+  ctx.fillRect(0, 0, canvas.width, 12);
+  ctx.textBaseline = 'top';
+  for (const row of rows) {
+    ctx.font = row.font;
+    ctx.fillStyle = row.color;
+    ctx.fillText(row.line, row.x, row.y);
+  }
+  const bytes = Uint8Array.from(atob(canvas.toDataURL('image/png').split(',')[1]), c => c.charCodeAt(0));
+  const slug = r.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return new File([bytes], slug + '.png', {type: 'image/png'});
+}
+
+$('#recipe-detail').addEventListener('click', async event => {
+  const button = event.target.closest('[data-share-recipe]');
+  if (!button) return;
+  const status = $('#share-recipe-status');
+  const recipe = recipes.find(r => r.id === Number(button.dataset.shareRecipe));
+  if (!recipe) return;
+  button.disabled = true;
+  status.textContent = '';
+  try {
+    const file = recipeImage(recipe);
+    if (navigator.share && navigator.canShare?.({files: [file]})) {
+      try {
+        await navigator.share({files: [file]});
+        return;
+      } catch (error) {
+        if (error.name === 'AbortError') return;
+      }
+    }
+    const url = URL.createObjectURL(file);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = file.name;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+    status.textContent = 'Imagen descargada. Adjunta el PNG en tu chat de WhatsApp.';
+  } catch {
+    status.textContent = 'No se pudo crear la imagen. Inténtalo de nuevo.';
+  } finally {
+    button.disabled = false;
+  }
+});
