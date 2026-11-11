@@ -1,4 +1,4 @@
-const CACHE='recetario-v5';const CORE=['./','./index.html','./app.js','./manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png','./widgets/recipe-template.json','./widgets/recipe-data.json','./widgets/widget-preview.svg'];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('recetario-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(r=>{if(r.ok||r.type==='opaque'){const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy))}return r}).catch(()=>caches.match(e.request).then(r=>r||(e.request.mode==='navigate'?caches.match('./index.html'):Response.error()))))});
+const CACHE='recetario-v6';const CORE=['./','./index.html','./app.js','./manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png','./widgets/recipe-template.json','./widgets/recipe-data.json','./widgets/widget-preview.svg'];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('recetario-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(r=>{if(r.ok||r.type==='opaque'){const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy))}return r}).catch(()=>caches.match(e.request).then(r=>r||(e.request.mode==='navigate'?caches.match('./index.html'):Response.error()))))});
 
 // Windows PWA widgets API is available only on supported Edge/Windows installations.
 async function renderRecipeWidget(widget, requestedIndex) {
@@ -39,4 +39,19 @@ self.addEventListener('widgetclick', e => {
     const index = state ? Number(await state.text()) : 0;
     return self.clients.openWindow(new URL('?receta=' + (index + 1), self.registration.scope).href);
   })());
+});
+
+self.addEventListener('message', event => {
+ if(event.data?.type!=='WIDGET_DIAGNOSTIC'||!event.ports[0])return;
+ event.waitUntil((async()=>{
+  const result={version:CACHE,apiDisponible:'widgets' in self};
+  try{
+   if(result.apiDisponible){
+    const widget=await self.widgets.getByTag('recetario-ideas');
+    result.widgetDetectado=!!widget;
+    if(widget){result.instalable=widget.installable;result.instancias=widget.instances?.length;result.nombre=widget.definition?.name;result.etiqueta=widget.definition?.tag;}
+   }
+  }catch(error){result.error=String(error);}
+  event.ports[0].postMessage(result);
+ })());
 });

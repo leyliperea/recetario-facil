@@ -1,0 +1,35 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="manifest" href="./manifest.webmanifest"><title>Comprobar widget · Recetario Fácil</title><style>body{font:17px/1.6 system-ui;background:#faf8f5;color:#302c35;max-width:760px;margin:48px auto;padding:24px}button,a{color:#74569b}button{font:inherit;padding:12px 20px;border:1px solid #74569b;border-radius:10px;background:white;cursor:pointer}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#ece5f2;padding:24px;border-radius:16px}h1{line-height:1.2}small{display:block}</style><h1>Comprobar widget</h1><p>Abre esta página en Microsoft Edge, en la misma computadora y perfil donde instalaste Recetario. La comprobación no borra tus recetas ni reinstala la aplicación.</p><button id="check">Comprobar</button> <button id="copy">Copiar resultado</button><pre id="out" role="status">Pulsa Comprobar.</pre><small>El resultado permanece en tu equipo. Puedes copiarlo para revisarlo en el chat.</small><p><a href="./">Volver al recetario</a></p><script>
+const out=document.querySelector('#out');let report='';
+function line(t){report+=t+'\n';out.textContent=report;}
+function timeout(p,ms,label){return new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error(label)),ms);p.then(v=>{clearTimeout(timer);resolve(v)},e=>{clearTimeout(timer);reject(e)})})}
+document.querySelector('#check').onclick=async()=>{
+ report='';line('Comprobación de Recetario · versión 6');line('HTTPS: '+(isSecureContext?'sí':'no'));
+ try{
+  for(const path of ['manifest.webmanifest','widgets/recipe-template.json','widgets/recipe-data.json','widgets/widget-preview.svg']){
+   const response=await fetch('./'+path,{cache:'no-store',signal:AbortSignal.timeout(12000)});
+   if(!response.ok)throw Error(path+': HTTP '+response.status);
+   if(path.endsWith('.json')||path.endsWith('.webmanifest'))await response.json();
+   line(path+': accesible');
+  }
+  if(!('serviceWorker' in navigator))throw Error('El navegador no permite service workers.');
+  const reg=await navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'});
+  await timeout(reg.update(),15000,'La actualización no respondió a tiempo.');
+  const ready=await timeout(navigator.serviceWorker.ready,15000,'El service worker no se activó.');
+  if(reg.installing)await timeout(new Promise(resolve=>{const worker=reg.installing;worker.addEventListener('statechange',()=>{if(worker.state==='activated'||worker.state==='redundant')resolve()})}),15000,'La actualización sigue pendiente.');
+  const worker=reg.active||ready.active;if(!worker)throw Error('No hay service worker activo.');
+  const channel=new MessageChannel();
+  const response=timeout(new Promise(resolve=>{channel.port1.onmessage=e=>resolve(e.data);worker.postMessage({type:'WIDGET_DIAGNOSTIC'},[channel.port2])}),12000,'La versión activa no respondió. Recarga esta página y vuelve a comprobar.');
+  try{
+   const result=await response;
+   line('Worker activo: '+result.version);
+   line('API de Widgets disponible: '+(result.apiDisponible?'sí':'no'));
+   if(result.apiDisponible){
+    line('Definición reconocida por Edge: '+(result.widgetDetectado?'sí':'no'));
+    if(result.widgetDetectado){line('Nombre: '+result.nombre);line('Instalable: '+result.instalable);line('Instancias registradas: '+result.instancias);}
+   }
+   if(result.error)line('Error: '+result.error);
+  }finally{channel.port1.close()}
+ }catch(error){line('Detalle: '+error.message)}
+};
+document.querySelector('#copy').onclick=async()=>{try{await navigator.clipboard.writeText(report||out.textContent);document.querySelector('#copy').textContent='Copiado'}catch{line('Selecciona y copia el resultado manualmente.')}};
+</script></html>
