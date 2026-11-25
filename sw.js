@@ -1,4 +1,4 @@
-const CACHE='recetario-v8';const CORE=['./','./index.html','./app.js?v=7','./manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png','./widgets/recipe-template.json','./widgets/recipe-data.json','./widgets/widget-preview.svg'];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('recetario-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(r=>{if(r.ok||r.type==='opaque'){const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy))}return r}).catch(()=>caches.match(e.request).then(r=>r||(e.request.mode==='navigate'?caches.match('./index.html'):Response.error()))))});
+const CACHE='recetario-v9-notifications';const CORE=['./','./index.html','./app.js?v=9','./notifications.js?v=9','./manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png','./widgets/recipe-template.json','./widgets/recipe-data.json','./widgets/widget-preview.svg'];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('recetario-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(r=>{if(r.ok||r.type==='opaque'){const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy))}return r}).catch(()=>caches.match(e.request).then(r=>r||(e.request.mode==='navigate'?caches.match('./index.html'):Response.error()))))});
 
 // Windows PWA widgets API is available only on supported Edge/Windows installations.
 async function renderRecipeWidget(widget, requestedIndex) {
@@ -54,4 +54,21 @@ self.addEventListener('message', event => {
   }catch(error){result.error=String(error);}
   event.ports[0].postMessage(result);
  })());
+});
+// Persistent notification actions, including opening an installed PWA.
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  if (event.action === 'dismiss') return;
+  event.waitUntil((async () => {
+    const url = new URL('?vista=compras', self.registration.scope).href;
+    const windows = await self.clients.matchAll({type:'window', includeUncontrolled:true});
+    for (const client of windows) {
+      if (client.url.startsWith(self.registration.scope) && 'focus' in client) {
+        client.postMessage({type:'OPEN_SHOPPING'});
+        await client.focus();
+        return;
+      }
+    }
+    await self.clients.openWindow(url);
+  })());
 });
