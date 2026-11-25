@@ -1,6 +1,7 @@
 (() => {
   const status = document.querySelector('#push-status');
   const subscribe = document.querySelector('#subscribe-push');
+  const testPush = document.querySelector('#test-push');
   const unsubscribe = document.querySelector('#unsubscribe-push');
   const base = (window.RECETARIO_PUSH_API || '').replace(/\/$/, '');
   const supported = isSecureContext && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
@@ -15,6 +16,7 @@
     return response.json();
   }
   subscribe.disabled = !supported || !base;
+  testPush.disabled = !supported || !base;
   unsubscribe.disabled = !supported;
   message(!supported ? 'Este navegador no admite mensajes push.' : !base ? 'El envío push estará disponible cuando se conecte el servidor.' : 'Activa push para recibir novedades del recetario aunque no lo tengas abierto.');
   subscribe.addEventListener('click', async () => {
@@ -34,6 +36,18 @@
       message('Push activado. Puedes cerrar el recetario y recibir los avisos enviados desde el servidor.');
     } catch (error) { message(error.message || 'No se pudo activar push. Inténtalo de nuevo.'); }
     finally { subscribe.disabled = !supported || !base; }
+  });
+  testPush.addEventListener('click', async () => {
+    testPush.disabled = true;
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      if (!subscription || Notification.permission !== 'granted') throw new Error('Primero pulsa Activar push y permite las notificaciones.');
+      message('Conectando con el servidor. Si estaba en reposo, puede tardar un minuto…');
+      await api('/push-test', {subscription:subscription.toJSON()});
+      message('Prueba solicitada. Cierra la ventana del recetario: el servidor enviará el aviso en 10 segundos.');
+    } catch(error) { message(error.message || 'No se pudo solicitar la prueba push.'); }
+    finally { testPush.disabled = !supported || !base; }
   });
   unsubscribe.addEventListener('click', async () => {
     unsubscribe.disabled = true;

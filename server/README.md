@@ -25,3 +25,11 @@ El script de envío informa cuántos mensajes aceptó el proveedor, cuántas sus
 No subas `.env`, claves privadas ni `data/` a GitHub. No hay una ruta pública para enviar avisos: el envío es un comando privado del administrador. No añadas el backend ni las suscripciones a la caché de la PWA. La lista local de compras no se envía al servidor; el push es un aviso de novedades y no modifica su distintivo.
 
 Los registros de suscripción se limitan a 1000 y las solicitudes se limitan por conexión. Para uso público a gran escala, sustituye el almacenamiento JSON por una base de datos y añade controles de abuso en el alojamiento.
+
+## Prueba desde la PWA en Render Free
+
+El botón Probar push en 10 segundos pide al servidor enviar un mensaje fijo a la suscripción del propio dispositivo. Cierra la ventana tras ver la confirmación. El servidor conserva el temporizador solo mientras sigue ejecutándose. No es un recordatorio duradero.
+
+En Render Free, los registros locales de suscripciones se pierden al reiniciar, desplegar o entrar en reposo. La suscripción del navegador y las claves VAPID permanecen, y la prueba funciona enviándola en cada solicitud. Para difundir novedades sin volver a abrir la app necesitas almacenamiento externo persistente; esta entrega es una demostración gratuita, no un servicio de difusión duradero.
+
+Para Render, sin Root Directory, usa Build Command `npm install --prefix server` y Start Command `node server/server.mjs`. Configura ALLOWED_ORIGIN, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY y VAPID_SUBJECT en Environment. /health permite comprobar disponibilidad sin exponer secretos.
