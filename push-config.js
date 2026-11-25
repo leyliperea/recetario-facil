@@ -1,2 +1,2 @@
-// URL HTTPS del servidor Node de la carpeta server; sin barra final.
-window.RECETARIO_PUSH_API = '';
+// Servidor push del recetario. Las claves privadas solo están en Render.
+window.RECETARIO_PUSH_API = 'https://recetario-push.onrender.com';
