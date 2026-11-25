@@ -1,4 +1,4 @@
-const CACHE='recetario-v9-notifications';const CORE=['./','./index.html','./app.js?v=9','./notifications.js?v=9','./manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png','./widgets/recipe-template.json','./widgets/recipe-data.json','./widgets/widget-preview.svg'];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('recetario-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(r=>{if(r.ok||r.type==='opaque'){const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy))}return r}).catch(()=>caches.match(e.request).then(r=>r||(e.request.mode==='navigate'?caches.match('./index.html'):Response.error()))))});
+const CACHE='recetario-v10-push';const CORE=['./','./index.html','./app.js?v=10','./notifications.js?v=10','./push-config.js?v=10','./push.js?v=10','./manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png','./widgets/recipe-template.json','./widgets/recipe-data.json','./widgets/widget-preview.svg'];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('recetario-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(r=>{if(r.ok||r.type==='opaque'){const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy))}return r}).catch(()=>caches.match(e.request).then(r=>r||(e.request.mode==='navigate'?caches.match('./index.html'):Response.error()))))});
 
 // Windows PWA widgets API is available only on supported Edge/Windows installations.
 async function renderRecipeWidget(widget, requestedIndex) {
@@ -70,5 +70,23 @@ self.addEventListener('notificationclick', event => {
       }
     }
     await self.clients.openWindow(url);
+  })());
+});
+
+
+// Always display a visible notification, even for an empty or malformed payload.
+self.addEventListener('push', event => {
+  event.waitUntil((async () => {
+    let data = {};
+    try { data = event.data?.json() || {}; }
+    catch { data = {body:event.data?.text()}; }
+    if (!data || typeof data !== 'object') data = {};
+    await self.registration.showNotification(
+      typeof data.title === 'string' ? data.title.slice(0,100) : 'Recetario Fácil', {
+        body:typeof data.body === 'string' ? data.body.slice(0,500) : 'Hay novedades en tu recetario. Abre la aplicación para verlas.',
+        icon:new URL('icon-192.png', self.registration.scope).href,
+        tag:'recetario-push',
+        actions:[{action:'open-shopping',title:'Ver compras'},{action:'dismiss',title:'Cerrar'}]
+      });
   })());
 });

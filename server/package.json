@@ -1,0 +1,8 @@
+{
+  "name": "recetario-push-server",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=22"},
+  "scripts": {"start": "node --env-file=.env server.mjs", "keys": "web-push generate-vapid-keys --json", "send": "node --env-file=.env send.mjs"},
+  "dependencies": {"web-push": "^3.6.7"}
+}
