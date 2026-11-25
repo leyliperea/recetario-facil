@@ -11,9 +11,11 @@
     return Uint8Array.from(value, c => c.charCodeAt(0));
   }
   async function api(path, body) {
-    const response = await fetch(base + path, {method: body ? 'POST' : 'GET', cache:'no-store', headers:body ? {'Content-Type':'application/json'} : {}, body:body ? JSON.stringify(body) : undefined});
-    if (!response.ok) throw new Error('No se pudo contactar el servidor push.');
-    return response.json();
+    const response = await fetch(base + path, {method: body ? 'POST' : 'GET', cache:'no-store', signal:AbortSignal.timeout(90000), headers:body ? {'Content-Type':'application/json'} : {}, body:body ? JSON.stringify(body) : undefined});
+    let data;
+    try { data = await response.json(); } catch { throw new Error('El servidor está despertando. Espera un minuto y vuelve a intentarlo.'); }
+    if (!response.ok) throw new Error(data.error || ('El servidor respondió con error ' + response.status));
+    return data;
   }
   subscribe.disabled = !supported || !base;
   testPush.disabled = !supported || !base;
@@ -24,6 +26,7 @@
     try {
       // Ask from the click, before network requests consume user activation.
       const permission = await Notification.requestPermission();
+      window.dispatchEvent(new Event('notification-permission-updated'));
       if (permission !== 'granted') throw new Error('Permite las notificaciones en los ajustes del sitio para activar push.');
       const {publicKey} = await api('/vapid-public-key');
       const registration = await navigator.serviceWorker.ready;

@@ -12,7 +12,7 @@
   function updateStatus(message) {
     status.textContent = message || (!supported ? 'Las notificaciones requieren un navegador compatible y HTTPS o localhost.' :
       Notification.permission === 'granted' ? 'Notificaciones permitidas. Puedes enviar una prueba.' :
-      Notification.permission === 'denied' ? 'Notificaciones bloqueadas. Puedes habilitarlas en la configuración del sitio.' :
+      Notification.permission === 'denied' ? 'Notificaciones bloqueadas. Abre el recetario en el navegador, pulsa el icono junto a la dirección y cambia Notificaciones a Permitir. Después vuelve aquí y pulsa Revisar avisos.' :
       'Activa las notificaciones para probar un aviso de compras.');
     enable.disabled = !supported || Notification.permission !== 'default';
     test.disabled = !supported || Notification.permission !== 'granted';
@@ -33,14 +33,14 @@
     try {
       await Notification.requestPermission();
       updateStatus();
+      window.dispatchEvent(new Event('notification-permission-updated'));
     } catch { updateStatus('No se pudo solicitar el permiso. Revisa la configuración del navegador.'); }
   });
   test.addEventListener('click', async () => {
     if (!supported || Notification.permission !== 'granted') return updateStatus();
     test.disabled = true;
     try {
-      const registration = await navigator.serviceWorker.getRegistration();
-      if (!registration || !registration.active) throw new Error('Service worker no activo');
+      const registration = await navigator.serviceWorker.ready;
       const count = pending();
       await registration.showNotification('Recetario Fácil · Lista de compras', {
         body: count ? `Tienes ${count} ingrediente${count === 1 ? '' : 's'} pendiente${count === 1 ? '' : 's'} por comprar.` : 'Tu lista de compras está al día.',
@@ -63,6 +63,17 @@
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') { updateBadge(); updateStatus(); }
   });
+  document.querySelector('#check-notifications').addEventListener('click', async () => {
+    updateStatus();
+    if (!supported) return;
+    if (Notification.permission !== 'granted') return;
+    try {
+      const registration = await navigator.serviceWorker.getRegistration();
+      updateStatus(registration?.active ? 'Permiso permitido y aplicación preparada. Pulsa Probar notificación. Si Windows no muestra el aviso, revisa Configuración → Sistema → Notificaciones y desactiva No molestar.' : 'La aplicación todavía se está preparando. Conéctate a internet y vuelve a abrirla.');
+    } catch { updateStatus('No se pudo comprobar la aplicación. Vuelve a abrirla con internet.'); }
+  });
+  window.addEventListener('focus', () => updateStatus());
+  window.addEventListener('notification-permission-updated', () => updateStatus());
   updateStatus();
   updateBadge();
 })();
