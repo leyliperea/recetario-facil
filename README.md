@@ -33,3 +33,11 @@ Los favoritos, compras y preferencias se guardan solo en el navegador actual. No
 La sección Avisos de compras permite notificaciones locales de prueba y el distintivo de ingredientes pendientes. Los controles de push reciben avisos enviados por un servidor, incluso sin tener abierta la ventana de la app cuando el sistema permite su entrega.
 
 El backend Node y la guía están en [server/README.md](server/README.md). Para habilitar los controles push hay que desplegar ese servidor, configurar sus claves VAPID privadas y poner su URL en `push-config.js`. No hay un servidor push activo incluido en GitHub Pages. La solicitud de permiso ocurre únicamente al pulsar un botón.
+
+## Avisos al guardar favoritos y panel de administrador
+
+Al agregar una receta con el corazón se muestra una notificación local con su nombre si el usuario concede permiso; al quitarla de favoritos no se envía. El aviso abre esa receta. Si no hay permiso se conserva la confirmación dentro de la app.
+
+Abre [admin.html](admin.html) para escribir y enviar avisos push a los suscritos. Antes, configura en Render la variable secreta ADMIN_PASSWORD con una contraseña de al menos 16 caracteres. No se guarda esa contraseña en el navegador ni en GitHub. El panel informa cuántos envíos aceptó el proveedor y elimina suscripciones caducadas. La clave VAPID privada permanece en Render.
+
+Render Free pierde la lista local de suscriptores al reiniciar o desplegar. Es necesario pulsar Activar push de nuevo tras esos eventos; para difusión duradera utiliza una base de datos externa o almacenamiento persistente. Los favoritos siguen guardados localmente en cada navegador.

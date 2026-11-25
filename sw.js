@@ -1,4 +1,4 @@
-const CACHE='recetario-v13-push';const CORE=['./','./index.html','./app.js?v=13','./notifications.js?v=13','./push-config.js?v=13','./push.js?v=13','./manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png','./widgets/recipe-template.json','./widgets/recipe-data.json','./widgets/widget-preview.svg'];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('recetario-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));self.addEventListener('fetch',e=>{if(e.request.method!=='GET'||new URL(e.request.url).origin!==self.location.origin)return;e.respondWith(fetch(e.request).then(r=>{if(r.ok||r.type==='opaque'){const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy))}return r}).catch(()=>caches.match(e.request).then(r=>r||(e.request.mode==='navigate'?caches.match('./index.html'):Response.error()))))});
+const CACHE='recetario-v14-favorites';const CORE=['./','./index.html','./app.js?v=14','./notifications.js?v=14','./push-config.js?v=14','./push.js?v=14','./manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png','./widgets/recipe-template.json','./widgets/recipe-data.json','./widgets/widget-preview.svg'];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('recetario-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));self.addEventListener('fetch',e=>{if(e.request.method!=='GET'||new URL(e.request.url).origin!==self.location.origin)return;e.respondWith(fetch(e.request).then(r=>{if(r.ok||r.type==='opaque'){const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy))}return r}).catch(()=>caches.match(e.request).then(r=>r||(e.request.mode==='navigate'?caches.match('./index.html'):Response.error()))))});
 
 // Windows PWA widgets API is available only on supported Edge/Windows installations.
 async function renderRecipeWidget(widget, requestedIndex) {
@@ -60,11 +60,13 @@ self.addEventListener('notificationclick', event => {
   event.notification.close();
   if (event.action === 'dismiss') return;
   event.waitUntil((async () => {
-    const url = new URL('?vista=compras', self.registration.scope).href;
+    const recipeId = Number(event.notification.data?.recipeId);
+    const isRecipe = Number.isInteger(recipeId) && recipeId > 0;
+    const url = new URL(isRecipe ? '?receta=' + recipeId : '?vista=compras', self.registration.scope).href;
     const windows = await self.clients.matchAll({type:'window', includeUncontrolled:true});
     for (const client of windows) {
       if (client.url.startsWith(self.registration.scope) && 'focus' in client) {
-        client.postMessage({type:'OPEN_SHOPPING'});
+        client.postMessage(isRecipe ? {type:'OPEN_RECIPE',recipeId} : {type:'OPEN_SHOPPING'});
         await client.focus();
         return;
       }

@@ -56,6 +56,10 @@
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', event => {
       if (event.data?.type === 'OPEN_SHOPPING') showShopping();
+      if (event.data?.type === 'OPEN_RECIPE' && recipes.some(r => r.id === event.data.recipeId)) {
+        if (document.querySelector('#dialog').open) document.querySelector('#dialog').close();
+        openRecipe(event.data.recipeId);
+      }
     });
   }
   if (new URLSearchParams(location.search).get('vista') === 'compras') showShopping();

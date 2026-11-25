@@ -1,3 +1,4 @@
+import {createAdminHandler} from './admin-handler.mjs';
 import webpush from 'web-push';
 import {createServer} from 'node:http';
 import {id, read, write, validSubscription} from './store.mjs';
@@ -5,6 +6,7 @@ const origin = process.env.ALLOWED_ORIGIN;
 const publicKey = process.env.VAPID_PUBLIC_KEY;
 if (!origin || !publicKey) throw new Error('Configura ALLOWED_ORIGIN y VAPID_PUBLIC_KEY en .env');
 webpush.setVapidDetails(process.env.VAPID_SUBJECT, publicKey, process.env.VAPID_PRIVATE_KEY);
+const admin=createAdminHandler({read,write,send:(...args)=>webpush.sendNotification(...args),password:process.env.ADMIN_PASSWORD});
 const testCooldown = new Map();
 const rate = new Map();
 setInterval(() => rate.clear(), 60_000).unref();
@@ -17,8 +19,9 @@ createServer(async (req,res) => {
   if (req.headers.origin !== origin) return reply(403,{error:'Origen no permitido'});
   res.setHeader('Access-Control-Allow-Origin',origin);
   res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers','Content-Type');
+  res.setHeader('Access-Control-Allow-Headers','Content-Type, Authorization');
   if(req.method==='OPTIONS') {res.writeHead(204);return res.end();}
+  if(req.url.startsWith('/admin/')) { try { return await admin(req,res); } catch { return reply(500,{error:'No se pudo acceder al administrador'}); } }
   if(req.method==='GET' && req.url==='/vapid-public-key') return reply(200,{publicKey});
   if(req.method!=='POST' || !['/subscriptions','/push-test'].includes(req.url)) return reply(404,{error:'Ruta no encontrada'});
   if(!req.headers['content-type']?.startsWith('application/json')) return reply(415,{error:'Se requiere JSON'});
